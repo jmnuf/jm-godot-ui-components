@@ -232,7 +232,6 @@ func _on_SuggestiveLineEdit_text_changed(_new_text:String) -> void:
 
 
 func _on_SuggestiveLineEdit_text_entered(new_text: String) -> void:
-	print("Entered")
 	if not new_text.rstrip(" ").ends_with(","):
 		new_text = "%s, " % new_text.rstrip(" ")
 	

@@ -12,36 +12,36 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 
 [node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer"]
-margin_left = 412.0
+margin_left = 312.0
 margin_top = 277.0
-margin_right = 612.0
+margin_right = 712.0
 margin_bottom = 323.0
 
 [node name="TagsContainer" type="VBoxContainer" parent="CenterContainer/VBoxContainer"]
-margin_right = 200.0
+margin_right = 400.0
 margin_bottom = 46.0
-rect_min_size = Vector2( 200, 0 )
+rect_min_size = Vector2( 400, 0 )
 script = ExtResource( 2 )
 
 [node name="Label" type="Label" parent="CenterContainer/VBoxContainer/TagsContainer"]
-margin_right = 200.0
+margin_right = 400.0
 margin_bottom = 14.0
 text = "Tags"
 align = 1
 
 [node name="GridContainer" type="GridContainer" parent="CenterContainer/VBoxContainer/TagsContainer"]
 margin_top = 18.0
-margin_right = 200.0
+margin_right = 400.0
 margin_bottom = 18.0
 size_flags_horizontal = 3
 custom_constants/vseparation = 8
 custom_constants/hseparation = 8
-columns = 2
+columns = 3
 
 [node name="SuggestiveLineEdit" parent="CenterContainer/VBoxContainer/TagsContainer" instance=ExtResource( 1 )]
 anchor_right = 0.0
 anchor_bottom = 0.0
 margin_top = 22.0
-margin_right = 200.0
+margin_right = 400.0
 margin_bottom = 46.0
 _possible_suggestions = PoolStringArray( "Discount/Low", "Game/Tabletop", "Game/Solo", "Game/Multiplayer", "Popularity/Low", "Popularity/High" )

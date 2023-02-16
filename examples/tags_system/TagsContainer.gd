@@ -21,6 +21,7 @@ func _generate_labels_from_suggestive_edit_phrases() -> void:
 			continue
 		
 		var pill = PillLabel.instance()
+		pill.rect_scale = Vector2.ONE * 0.5
 		pill.set_pill_bg_color(Color(0.6, 0.5, 0.6))
 		pill.text = phrase
 		grid.add_child(pill)
