@@ -53,13 +53,15 @@ func popup_suggestions() -> void:
 		if not tree: return
 		else: tree.root.add_child(_suggestion_popup)
 	
-	_calculate_suggestions(true)
-	prints(_possible_suggestions)
-	prints(_used_suggestions)
+	var suggestions = _calculate_suggestions(true)
+	
+	if suggestions.empty():
+		return
+	
 	call_deferred("_show_suggestion_popup_at_caret")
 
 
-func _calculate_suggestions(force_update_popup := false) -> void:
+func _calculate_suggestions(force_update_popup := false) -> PoolStringArray:
 	var setup_popup = _suggestion_popup.visible
 	var extent = get_phrase_extent_near_caret()
 	_used_suggestions = (
@@ -88,7 +90,7 @@ func _calculate_suggestions(force_update_popup := false) -> void:
 	
 	# If popup not visible no need to update it
 	if not _suggestion_popup.visible and not force_update_popup:
-		return
+		return PoolStringArray(suggestions)
 	
 	if not _suggest_from.strip_edges().empty():
 		suggestions.sort_custom(self, "_compare_phrases_to_suggest")
@@ -96,6 +98,8 @@ func _calculate_suggestions(force_update_popup := false) -> void:
 	_suggestion_popup.clear()
 	for phrase in suggestions:
 		_suggestion_popup.add_item(phrase)
+	
+	return PoolStringArray(suggestions)
 
 
 func _compare_phrases_to_suggest(phrase_a:String, phrase_b:String) -> bool:
@@ -154,6 +158,9 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 		return
 	
 	if event.scancode != KEY_SPACE:
+		return
+	
+	if _possible_suggestions.empty():
 		return
 	
 	popup_suggestions()
