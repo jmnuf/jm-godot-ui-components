@@ -1,10 +1,14 @@
 [gd_scene load_steps=3 format=2]
 
-[ext_resource path="res://addons/jm/more_ui/pill_label/pill_label.gd" type="Script" id=1]
+[ext_resource path="res://addons/jm/more_ui/pill_label/PillLabel.gd" type="Script" id=1]
 
 [sub_resource type="StyleBoxFlat" id=1]
 bg_color = Color( 0.678431, 0.568627, 0.568627, 1 )
 border_color = Color( 0, 0, 0, 1 )
+corner_radius_top_left = 150
+corner_radius_top_right = 150
+corner_radius_bottom_right = 150
+corner_radius_bottom_left = 150
 expand_margin_left = 2.0
 expand_margin_right = 2.0
 expand_margin_top = 1.0

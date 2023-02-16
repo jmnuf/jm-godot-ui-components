@@ -1,6 +1,6 @@
 extends VBoxContainer
 
-const PillLabel := preload("res://addons/jm/more_ui/pill_label/pill_label.tscn")
+const PillLabel := preload("res://addons/jm/more_ui/pill_label/PillLabel.tscn")
 
 onready var grid : GridContainer = $GridContainer
 onready var suggestive_edit = $SuggestiveLineEdit
