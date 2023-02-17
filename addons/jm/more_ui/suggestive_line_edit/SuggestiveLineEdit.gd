@@ -45,6 +45,14 @@ func get_phrases() -> PoolStringArray:
 	return phrases
 
 
+func set_suggestions_popup_parent(node:Node) -> void:
+	if _suggestion_popup.get_parent():
+		_suggestion_popup.get_parent()\
+			.remove_child(_suggestion_popup)
+	
+	node.add_child(_suggestion_popup)
+
+
 func popup_suggestions() -> void:
 	var suggestions_parent = _suggestion_popup.get_parent()
 	
