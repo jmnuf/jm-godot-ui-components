@@ -17,8 +17,18 @@ func _init() -> void:
 	if not is_connected("text_entered", self, "_on_SuggestiveLineEdit_text_entered"):
 		connect("text_entered", self, "_on_SuggestiveLineEdit_text_entered")
 	
+	
+	_suggestion_popup.popup_exclusive = false
+	
+	if not _suggestion_popup.is_connected("focus_entered", self, "_on_SuggestionsPopup_focus_entered"):
+		_suggestion_popup.connect("focus_entered", self, "_on_SuggestionsPopup_focus_entered")
+	
+	if not _suggestion_popup.is_connected("focus_exited", self, "_on_SuggestionsPopup_focus_exited"):
+		_suggestion_popup.connect("focus_exited", self, "_on_SuggestionsPopup_focus_exited")
+	
 	if not _suggestion_popup.is_connected("index_pressed", self, "_on_SuggestionsPopup_idx_pressed"):
 		_suggestion_popup.connect("index_pressed", self, "_on_SuggestionsPopup_idx_pressed")
+
 
 func _ready() -> void:
 	var root = get_tree().root
@@ -26,6 +36,7 @@ func _ready() -> void:
 		call_deferred("popup_suggestions")
 	
 	_suggestion_popup
+
 
 func add_possible_suggestion(phrase:String) -> void:
 	phrase = phrase.strip_edges()
@@ -69,6 +80,32 @@ func popup_suggestions() -> void:
 	call_deferred("_show_suggestion_popup_at_caret")
 
 
+func _calculate_suggestions_popup_global_position() -> Vector2:
+	var font = get("custom_fonts/font")
+	if not font:
+		font = get_font("font")
+	if not font:
+		push_error("Failed to get the font")
+		return rect_global_position
+	
+	var extent := get_phrase_extent_near_caret()
+	var text_behind_phrase = text.substr(0, extent[0])
+	var string_size := Vector2(0, font.height)
+	var padding:Vector2 = font.get_string_size(" ") / 2
+	if not text_behind_phrase.empty():
+		string_size = font.get_string_size(text_behind_phrase)
+	
+	var phrase_local_position := Vector2(string_size.x + padding.x, rect_size.y / 2 + string_size.y + padding.y / 2)
+	
+	prints("String size:", string_size)
+	prints("Caret index:", caret_position)
+	prints("Caret position:", phrase_local_position)
+	
+	var popup_position = rect_global_position + phrase_local_position
+	
+	return popup_position
+
+
 func _calculate_suggestions(force_update_popup := false) -> PoolStringArray:
 	var setup_popup = _suggestion_popup.visible
 	var extent = get_phrase_extent_near_caret()
@@ -107,6 +144,8 @@ func _calculate_suggestions(force_update_popup := false) -> PoolStringArray:
 	for phrase in suggestions:
 		_suggestion_popup.add_item(phrase)
 	
+	_suggestion_popup.set_current_index(0)
+	
 	return PoolStringArray(suggestions)
 
 
@@ -132,28 +171,18 @@ func _show_suggestion_popup_at_caret() -> void:
 		prints("Failed to get the font")
 		return
 	
-	var text_behind_caret = text.substr(0, caret_position)
-	var string_size := Vector2(0, font.height)
-	var padding_x:float = font.get_string_size(" ").x
-	if not text_behind_caret.empty():
-		string_size = font.get_string_size(text_behind_caret)
-	
-	var caret_local_position := Vector2(string_size.x + padding_x, rect_size.y / 2 + string_size.y / 2)
-	
-	prints("String size:", string_size)
-	prints("Caret index:", caret_position)
-	prints("Caret position:", caret_local_position)
-	
-	var extent := get_phrase_extent_near_caret()
+	var position = _calculate_suggestions_popup_global_position()
 	
 	_suggestion_popup.popup(Rect2(
-		rect_global_position + caret_local_position,
+		position,
 		Vector2(rect_size.x, 10)
 	))
+	_suggestion_popup.set_current_index(0)
 	
 	if not select_on_suggesting:
 		return
 	
+	var extent := get_phrase_extent_near_caret()
 	select(extent[0], extent[1])
 
 
@@ -209,6 +238,78 @@ func get_phrase_extent_near_caret() -> PoolIntArray:
 	return extent
 
 
+func _input(event: InputEvent) -> void:
+	if not _suggestion_popup.visible:
+		return
+	
+	if not (event is InputEventKey):
+		return
+	
+	if get_focus_owner() != self:
+		return
+	
+	var key = event.scancode
+	var item_count = _suggestion_popup.get_item_count()
+	
+	match key:
+		KEY_DOWN:
+			var idx = _suggestion_popup.get_current_index()
+			idx = (idx + 1) % item_count
+			_suggestion_popup.set_current_index(idx)
+		KEY_UP:
+			var idx = _suggestion_popup.get_current_index()
+			idx = idx - 1 if idx - 1 >= 0 else item_count - 1
+			_suggestion_popup.set_current_index(idx)
+		KEY_RIGHT:
+			var idx = _suggestion_popup.get_current_index()
+			var tag = _suggestion_popup.get_item_text(idx)
+			var extent = get_phrase_extent_near_caret()
+			var phrase = text.substr(extent[0], extent[1])
+			if not tag.begins_with(phrase):
+				return
+			
+			var next_char = tag.substr(phrase.length(), 1)
+			var pos = caret_position + 1
+			set_text("%s%s%s" % [
+				text.substr(0, extent[0]),
+				phrase + next_char,
+				text.substr(extent[1])
+			])
+			caret_position = pos
+		
+		KEY_ESCAPE:
+			_suggestion_popup.hide()
+		
+		KEY_TAB:
+			var idx = _suggestion_popup.get_current_index()
+			_suggestion_popup.emit_signal("index_pressed", idx)
+			_suggestion_popup.hide()
+		_:
+			return
+	
+	get_tree().set_input_as_handled()
+
+
+func _on_SuggestionsPopup_focus_entered() -> void:
+	grab_focus()
+
+
+func _on_SuggestionsPopup_focus_exited() -> void:
+	var focused_on = get_focus_owner()
+	if not focused_on:
+		call_deferred("_deferred_on_SuggestionsPopup_focus_exited")
+		return
+	
+	if focused_on != self:
+		_suggestion_popup.hide()
+
+
+func _deferred_on_SuggestionsPopup_focus_exited() -> void:
+	var focused_on = get_focus_owner()
+	if focused_on != self:
+		_suggestion_popup.hide()
+
+
 func _on_SuggestionsPopup_idx_pressed(idx: int) -> void:
 	var tag = _suggestion_popup.get_item_text(idx)
 	
@@ -237,6 +338,9 @@ func _on_SuggestionsPopup_idx_pressed(idx: int) -> void:
 
 func _on_SuggestiveLineEdit_text_changed(_new_text:String) -> void:
 	_calculate_suggestions()
+	if _suggestion_popup.visible:
+		var popup_position = _calculate_suggestions_popup_global_position()
+		_suggestion_popup.rect_global_position = popup_position
 
 
 func _on_SuggestiveLineEdit_text_entered(new_text: String) -> void:
